@@ -113,6 +113,16 @@ return [
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],
+        'fileprocessinginfo' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/fileprocessinginfo.log'),
+            'level' => 'debug'
+        ],
+        'fileprocessingerror' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/fileprocessingerror.log'),
+            'level' => 'debug'
+        ]
     ],
 
 ];

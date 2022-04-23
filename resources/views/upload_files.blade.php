@@ -4,7 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Upload File</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
 <div class="container mt-5" style="max-width: 500px">
@@ -13,6 +15,7 @@
         <h2 class="display-6">Upload File</h2>
     </div>
 
+    <div id="uploadError"> </div>
     <form id="fileUploadForm" method="POST" action="{{ url('/upload-doc-file') }}" enctype="multipart/form-data">
         @csrf
         <div class="form-group mb-3">
@@ -33,24 +36,31 @@
 <script>
     $(function () {
         $(document).ready(function () {
+            $(".progress").hide();
             $('#fileUploadForm').ajaxForm({
                 beforeSend: function () {
+                    $(".progress").show();
                     var percentage = '0';
                 },
                 uploadProgress: function (event, position, total, percentComplete) {
                     var percentage = percentComplete;
-                    $('.progress .progress-bar').css("width", percentage+'%', function() {
-                        return $(this).attr("aria-valuenow", percentage) + "%";
-                    })
+                        $(".progress-bar").css("width", percentage + "%").text(percentage + "%");
                 },
-                complete: function (xhr) {
-                    console.log('File has uploaded');
-                    // TODO Need to updated the UI of progress bar and resetting it
-                    // TODO Show the Error & Info to End User
+                complete: function (data) {
+                    $(".progress").hide();
+                    var msg = data.responseJSON.message;
+                    var status = (data.responseJSON.status === 'success') ? 'alert-success' : 'alert-danger';
+                    let contents = '<div class="alert '+status+' alert-block">'+
+                        '<strong>'+msg+'</strong></div>';
+                    $('#uploadError').html(contents);
 
                     setTimeout(function () {
-                        console.log("Clear the Message!");
-                    }, 3000)
+                        contents = '';
+                        $('#uploadError').html(contents);
+                        $('.progress .progress-bar').css("width", '0%', function() {
+                            return $(this).attr("aria-valuenow", 0) + "%";
+                        })
+                    }, 5000)
                 }
             });
         });

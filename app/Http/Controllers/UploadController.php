@@ -9,6 +9,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use Illuminate\Support\Facades\Log;
 
 class UploadController extends Controller
 {
@@ -28,17 +29,17 @@ class UploadController extends Controller
 
             // check extension
             if (!in_array($extension, $validExtension)) {
-                return response()->json(['error' => 'Required file type : xls, xlsx, csv,']);
+                return response()->json(['status' => 'failure','message' => 'Required file type : xls, xlsx, csv,']);
             }
 
             // fileanme
             $fileName = pathinfo($request->file('file')->getClientOriginalName(), PATHINFO_FILENAME);
             $name = $fileName . '.' . time() . "." . $extension;
+
             // move the file
             $request->file->move(public_path('uploads'), $name);
 
             $file = new AuctionFileUploaded();
-
             $filePath = public_path() . "/uploads/" . $name;
 
             // Php spreadsheet object to get the file type and open in reader mode
@@ -94,6 +95,10 @@ class UploadController extends Controller
 
                     $bidderLogin->save();
 
+                    // Logging info to fileprocessinginfo log file
+                    Log::channel('fileprocessinginfo')->info($fileName . "." . $extension .  " is processing and " . $i . " row has been inserted
+                    successfully in to the Bidder login table");
+
                 } else {
 
                     // create a bidder info object  and save it
@@ -111,6 +116,10 @@ class UploadController extends Controller
                     $bidderInfo->session_number = $sessionNumber;
                     $bidderInfo->save();
 
+                    // Logging info to fileprocessinginfo log file
+                    Log::channel('fileprocessinginfo')->info($fileName . "." . $extension .  " is processing and " . $i . " row has been inserted
+                    successfully in to the Bidder Info table");
+
                 }
             }
 
@@ -120,14 +129,22 @@ class UploadController extends Controller
             $file->is_uploaded = true;
             $file->save();
 
+            // Logging info to fileprocessinginfo log file
+            Log::channel('fileprocessinginfo')->info($fileName . "." . $extension .  " is processed and file info has been inserted
+                    successfully in to the Auction File Uploaded table");
+
             return response()->json(['status' => 'success', 'message' => 'Successfully uploaded.']);
 
         } catch (QueryException $e) {
 
+            // Logging info to fileprocessingerror log file
+            Log::channel('fileprocessingerror')->error($e->getMessage());
             return response()->json(['status' => 'failure', 'message' => "Query Exception"]);
 
         } catch (\Exception $e) {
 
+            // Logging info to fileprocessingerror log file
+            Log::channel('fileprocessingerror')->error($e->getMessage());
             return response()->json(['status' => 'failure', 'message' => $e->getMessage()]);
         }
     }
